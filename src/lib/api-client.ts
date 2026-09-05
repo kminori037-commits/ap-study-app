@@ -20,6 +20,25 @@ export type StudySession = {
   createdAt: string;
 };
 
+export type Question = {
+  questionId: string;
+  subject: "A" | "B";
+  group: string;
+  category: string;
+  prompt: string;
+  choices?: string[];
+  answerKind: "CHOICE" | "SHORT";
+  source: { label: string; url?: string };
+};
+
+export type GradeResult = {
+  correct: boolean;
+  correctIndex?: number;
+  modelAnswer: string;
+  explanation: string;
+  source: { label: string; url?: string };
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!apiUrl) throw new Error("API URLが設定されていません。");
   const session = await fetchAuthSession();
@@ -43,6 +62,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const learningApi = {
+  async getQuestions(subject: "A" | "B", category: string, filter: string) {
+    const query = new URLSearchParams({ subject, category, filter });
+    return (await request<{ items: Question[] }>(`/questions?${query.toString()}`)).items;
+  },
+  async gradeQuestion(questionId: string, subject: "A" | "B", answer: number | string) {
+    return request<GradeResult>(`/questions/${encodeURIComponent(questionId)}/grade`, {
+      method: "POST",
+      body: JSON.stringify({ subject, answer }),
+    });
+  },
   async getBookmarks() {
     return (await request<{ items: Bookmark[] }>("/bookmarks")).items;
   },

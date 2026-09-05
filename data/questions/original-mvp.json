@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "bankId": "ORIGINAL_MVP",
+  "questions": [
+    {
+      "questionId": "A-ORIGINAL-001",
+      "subject": "A",
+      "group": "テクノロジ",
+      "category": "セキュリティ",
+      "prompt": "公開鍵暗号方式を利用したディジタル署名で、送信者が署名の生成に使う鍵はどれか。",
+      "choices": ["受信者の公開鍵", "受信者の秘密鍵", "送信者の秘密鍵", "送信者の公開鍵"],
+      "answer": { "kind": "CHOICE", "correctIndex": 2, "modelAnswer": "送信者の秘密鍵", "explanation": "送信者は自身の秘密鍵で署名を生成し、受信者は送信者の公開鍵で署名を検証します。これにより作成者と改ざんの有無を確認できます。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "A-ORIGINAL-002",
+      "subject": "A",
+      "group": "テクノロジ",
+      "category": "データベース",
+      "prompt": "トランザクションのACID特性のうち、処理が全て実行されるか全く実行されないことを保証する性質はどれか。",
+      "choices": ["原子性", "一貫性", "独立性", "永続性"],
+      "answer": { "kind": "CHOICE", "correctIndex": 0, "modelAnswer": "原子性", "explanation": "原子性（Atomicity）は、トランザクションを分割できない一単位として扱い、全処理の成功または全処理の取消しを保証します。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "A-ORIGINAL-003",
+      "subject": "A",
+      "group": "テクノロジ",
+      "category": "ネットワーク",
+      "prompt": "IPv4ネットワークでプレフィックス長が/27のサブネットに含まれるIPアドレス数は幾つか。",
+      "choices": ["16", "30", "32", "64"],
+      "answer": { "kind": "CHOICE", "correctIndex": 2, "modelAnswer": "32", "explanation": "ホスト部は32−27＝5ビットなので、サブネット全体のアドレス数は2の5乗で32です。利用可能なホスト数を問う場合は通常30です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "A-ORIGINAL-004",
+      "subject": "A",
+      "group": "マネジメント",
+      "category": "プロジェクトマネジメント",
+      "prompt": "プロジェクトの所要期間を決める、余裕時間がゼロの作業経路を何と呼ぶか。",
+      "choices": ["クリティカルパス", "ベースライン", "マイルストーン", "スコープ"],
+      "answer": { "kind": "CHOICE", "correctIndex": 0, "modelAnswer": "クリティカルパス", "explanation": "クリティカルパス上の作業が遅れると、原則としてプロジェクト全体の完了も遅れます。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "A-ORIGINAL-005",
+      "subject": "A",
+      "group": "ストラテジ",
+      "category": "経営戦略",
+      "prompt": "売上高が800万円、変動費が480万円、固定費が240万円のとき、利益は幾らか。",
+      "choices": ["80万円", "240万円", "320万円", "560万円"],
+      "answer": { "kind": "CHOICE", "correctIndex": 0, "modelAnswer": "80万円", "explanation": "利益＝売上高−変動費−固定費なので、800−480−240＝80万円です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "A-ORIGINAL-006",
+      "subject": "A",
+      "group": "テクノロジ",
+      "category": "アルゴリズム",
+      "prompt": "整列済み配列に対する二分探索の平均的な時間計算量として適切なものはどれか。",
+      "choices": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "answer": { "kind": "CHOICE", "correctIndex": 1, "modelAnswer": "O(log n)", "explanation": "二分探索は比較のたびに探索範囲を半分にするため、比較回数は要素数の対数に比例します。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-001",
+      "subject": "B",
+      "group": "情報セキュリティ",
+      "category": "情報セキュリティ",
+      "prompt": "利用者に偽サイトを本物だと信じ込ませ、認証情報を入力させる攻撃を何というか。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["フィッシング", "フィッシング攻撃"], "modelAnswer": "フィッシング", "explanation": "フィッシングは、正規組織を装ったメールやWebサイトなどを使って認証情報や個人情報を詐取する攻撃です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-002",
+      "subject": "B",
+      "group": "サービスマネジメント",
+      "category": "サービスマネジメント",
+      "prompt": "サービス提供者と顧客の間で、サービス品質の目標を合意した文書を表す英字3文字を答えよ。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["SLA"], "modelAnswer": "SLA", "explanation": "SLA（Service Level Agreement）は、可用性や応答時間などのサービスレベル目標を合意する文書です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-003",
+      "subject": "B",
+      "group": "プロジェクトマネジメント",
+      "category": "プロジェクトマネジメント",
+      "prompt": "プロジェクト全体の完了時期を左右する、余裕時間がゼロの作業経路を答えよ。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["クリティカルパス"], "modelAnswer": "クリティカルパス", "explanation": "クリティカルパスは、プロジェクトネットワーク上で所要期間が最長となる経路です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-004",
+      "subject": "B",
+      "group": "経営戦略",
+      "category": "経営戦略",
+      "prompt": "SWOT分析で、企業内部にある好ましい要因を表す日本語を答えよ。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["強み"], "modelAnswer": "強み", "explanation": "SWOT分析では内部環境を強みと弱み、外部環境を機会と脅威に分けて整理します。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-005",
+      "subject": "B",
+      "group": "システム監査",
+      "category": "システム監査",
+      "prompt": "監査対象の業務を自ら担当していない者が監査することで確保される、監査人に必要な性質を答えよ。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["独立性"], "modelAnswer": "独立性", "explanation": "監査人の独立性は、監査対象から影響を受けず客観的に判断するために必要です。" },
+      "source": { "label": "本アプリ独自問題" }
+    },
+    {
+      "questionId": "B-ORIGINAL-006",
+      "subject": "B",
+      "group": "データベース",
+      "category": "データベース",
+      "prompt": "関係データベースで、行を一意に識別するために選ばれた属性又は属性の組を何というか。",
+      "answer": { "kind": "SHORT", "acceptedAnswers": ["主キー", "プライマリキー"], "modelAnswer": "主キー", "explanation": "主キーは表の各行を一意に識別し、NULLを許さないキーです。" },
+      "source": { "label": "本アプリ独自問題" }
+    }
+  ]
+}

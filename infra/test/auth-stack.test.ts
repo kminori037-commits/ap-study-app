@@ -51,5 +51,5 @@ test("creates an invite-only Lite user pool", () => {
     },
   });
 
-  template.resourceCountIs("AWS::ApiGatewayV2::Route", 7);
+  template.resourceCountIs("AWS::ApiGatewayV2::Route", 9);
 });

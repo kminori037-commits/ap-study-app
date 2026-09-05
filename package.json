@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "validate:questions": "node scripts/validate-questions.mjs",
+    "build:question-seed": "node scripts/build-question-seed.mjs"
   },
   "dependencies": {
     "aws-amplify": "^6.20.0",

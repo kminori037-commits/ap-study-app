@@ -93,6 +93,7 @@ export class InfraStack extends cdk.Stack {
       environment: {
         USER_LEARNING_TABLE: userLearning.tableName,
         QUESTION_BANK_TABLE: questionBank.tableName,
+        QUESTION_BANK_ID: "ORIGINAL_MVP",
       },
       logGroup: apiLogGroup,
     });
@@ -137,6 +138,8 @@ export class InfraStack extends cdk.Stack {
     addRoute("/history", [apigateway.HttpMethod.DELETE]);
     addRoute("/sessions", [apigateway.HttpMethod.POST]);
     addRoute("/account-data", [apigateway.HttpMethod.DELETE]);
+    addRoute("/questions", [apigateway.HttpMethod.GET]);
+    addRoute("/questions/{questionId}/grade", [apigateway.HttpMethod.POST]);
 
     new cdk.CfnOutput(this, "UserPoolId", {
       value: userPool.userPoolId,

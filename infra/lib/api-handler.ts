@@ -1,10 +1,12 @@
 export const apiHandlerCode = String.raw`
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand, DeleteCommand, QueryCommand, BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, DeleteCommand, QueryCommand, BatchWriteCommand, GetCommand, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 const { randomUUID } = require("node:crypto");
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.USER_LEARNING_TABLE;
+const questionTableName = process.env.QUESTION_BANK_TABLE;
+const questionBankId = process.env.QUESTION_BANK_ID;
 
 const reply = (statusCode, body) => ({
   statusCode,
@@ -26,6 +28,18 @@ const bookmarkView = ({ questionId, subject, category, createdAt }) => ({
 const sessionView = ({ sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt }) => ({
   sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt,
 });
+const questionView = ({ questionId, subject, group, category, prompt, choices, answerKind, source }) => ({
+  questionId, subject, group, category, prompt, ...(choices ? { choices } : {}), answerKind, source,
+});
+const normalizeAnswer = (value) => String(value ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, "");
+const getUserItems = async (pk, prefix) => {
+  const result = await db.send(new QueryCommand({
+    TableName: tableName,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+    ExpressionAttributeValues: { ":pk": pk, ":prefix": prefix },
+  }));
+  return result.Items ?? [];
+};
 const deleteUserItems = async (pk, prefix) => {
   let lastKey;
   let deletedCount = 0;
@@ -67,6 +81,73 @@ exports.handler = async (event) => {
   console.info("request_received", { route });
 
   try {
+    if (route === "GET /questions") {
+      const subject = event.queryStringParameters?.subject;
+      const category = event.queryStringParameters?.category ?? "全分野";
+      const filter = event.queryStringParameters?.filter ?? "all";
+      if (!["A", "B"].includes(subject)) return reply(400, { message: "科目が正しくありません。" });
+
+      const result = await db.send(new QueryCommand({
+        TableName: questionTableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+        ExpressionAttributeValues: { ":pk": "BANK#" + questionBankId + "#" + subject, ":prefix": "QUESTION#" },
+      }));
+      let questions = (result.Items ?? []).filter((item) => category === "全分野" || item.category === category || item.group === category);
+
+      if (filter === "bookmarked") {
+        const bookmarked = new Set((await getUserItems(pk, "BOOKMARK#")).map((item) => item.questionId));
+        questions = questions.filter((item) => bookmarked.has(item.questionId));
+      } else if (filter === "incorrect" || filter === "unanswered") {
+        const progress = new Map((await getUserItems(pk, "PROGRESS#")).map((item) => [item.questionId, item]));
+        questions = questions.filter((item) => filter === "unanswered" ? !progress.has(item.questionId) : progress.get(item.questionId)?.lastCorrect === false);
+      }
+
+      for (let index = questions.length - 1; index > 0; index -= 1) {
+        const other = Math.floor(Math.random() * (index + 1));
+        [questions[index], questions[other]] = [questions[other], questions[index]];
+      }
+      return reply(200, { items: questions.slice(0, 100).map(questionView) });
+    }
+
+    if (route === "POST /questions/{questionId}/grade") {
+      if (!safeQuestionId(questionId)) return reply(400, { message: "問題IDが正しくありません。" });
+      const body = parseBody(event);
+      if (!body || !["A", "B"].includes(body.subject)) return reply(400, { message: "回答が正しくありません。" });
+      const bankPk = "BANK#" + questionBankId + "#" + body.subject;
+      const [questionResult, answerResult] = await Promise.all([
+        db.send(new GetCommand({ TableName: questionTableName, Key: { PK: bankPk, SK: "QUESTION#" + questionId } })),
+        db.send(new GetCommand({ TableName: questionTableName, Key: { PK: bankPk, SK: "ANSWER#" + questionId } })),
+      ]);
+      const question = questionResult.Item;
+      const answer = answerResult.Item;
+      if (!question || !answer) return reply(404, { message: "問題が見つかりません。" });
+
+      const correct = answer.kind === "CHOICE"
+        ? Number(body.answer) === answer.correctIndex
+        : (answer.acceptedAnswers ?? []).some((accepted) => normalizeAnswer(accepted) === normalizeAnswer(body.answer));
+      const now = new Date().toISOString();
+      await db.send(new UpdateCommand({
+        TableName: tableName,
+        Key: { PK: pk, SK: "PROGRESS#" + questionId },
+        UpdateExpression: "SET questionId = :questionId, subject = :subject, category = :category, lastCorrect = :correct, lastAnsweredAt = :now ADD attempts :one",
+        ExpressionAttributeValues: {
+          ":questionId": questionId,
+          ":subject": body.subject,
+          ":category": question.category,
+          ":correct": correct,
+          ":now": now,
+          ":one": 1,
+        },
+      }));
+      return reply(200, {
+        correct,
+        correctIndex: answer.kind === "CHOICE" ? answer.correctIndex : undefined,
+        modelAnswer: answer.modelAnswer,
+        explanation: answer.explanation,
+        source: question.source,
+      });
+    }
+
     if (route === "GET /bookmarks") {
       const result = await db.send(new QueryCommand({
         TableName: tableName,
