@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { learningApi } from "@/lib/api-client";
 import type { SubjectKey } from "@/lib/subjects";
 
 const sample = {
@@ -25,15 +26,52 @@ export function SampleQuestion({ subject }: { subject: SubjectKey }) {
   const [textAnswer, setTextAnswer] = useState("");
   const [answered, setAnswered] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkPending, setBookmarkPending] = useState(true);
+  const [bookmarkError, setBookmarkError] = useState("");
   const canAnswer = subject === "a" ? selected !== null : textAnswer.trim().length > 0;
   const correct = subject === "a" && selected === question.correct;
+  const questionId = `sample-${subject}-001`;
+
+  useEffect(() => {
+    let active = true;
+    learningApi.getBookmarks()
+      .then((items) => {
+        if (active) setBookmarked(items.some((item) => item.questionId === questionId));
+      })
+      .catch((error: unknown) => {
+        if (active) setBookmarkError(error instanceof Error ? error.message : "ブックマークを確認できませんでした。");
+      })
+      .finally(() => {
+        if (active) setBookmarkPending(false);
+      });
+    return () => { active = false; };
+  }, [questionId]);
+
+  const toggleBookmark = async () => {
+    setBookmarkPending(true);
+    setBookmarkError("");
+    try {
+      if (bookmarked) {
+        await learningApi.deleteBookmark(questionId);
+        setBookmarked(false);
+      } else {
+        await learningApi.saveBookmark(questionId, { subject: subject.toUpperCase() as "A" | "B", category: question.category });
+        setBookmarked(true);
+      }
+    } catch (error) {
+      setBookmarkError(error instanceof Error ? error.message : "ブックマークを更新できませんでした。");
+    } finally {
+      setBookmarkPending(false);
+    }
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-8 sm:px-8 sm:py-12">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
         <span>科目{subject.toUpperCase()} ・ {question.category}</span>
-        <button type="button" aria-pressed={bookmarked} onClick={() => setBookmarked((value) => !value)} className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700">{bookmarked ? "★ 保存済み" : "☆ ブックマーク"}</button>
+        <button type="button" aria-pressed={bookmarked} disabled={bookmarkPending} onClick={toggleBookmark} className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 font-medium text-slate-700 disabled:cursor-wait disabled:text-slate-400">{bookmarkPending ? "確認中…" : bookmarked ? "★ 保存済み" : "☆ ブックマーク"}</button>
       </div>
+      {bookmarkError && <p className="mt-3 text-sm text-red-700" role="alert">{bookmarkError}</p>}
       <div className="mt-4 flex items-center justify-between gap-4 text-sm"><strong>問題 1 / 最大100問</strong><span className="text-slate-500">いつでも終了できます</span></div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="学習進捗" aria-valuenow={1} aria-valuemin={0} aria-valuemax={100}><span className="block h-full w-[1%] bg-blue-600" /></div>
       <section className="mt-7 rounded-3xl border border-slate-200 bg-white p-5 sm:p-8">

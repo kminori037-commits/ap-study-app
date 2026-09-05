@@ -8,7 +8,10 @@ const tableName = process.env.USER_LEARNING_TABLE;
 
 const reply = (statusCode, body) => ({
   statusCode,
-  headers: { "content-type": "application/json; charset=utf-8" },
+  headers: {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+  },
   body: JSON.stringify(body),
 });
 
@@ -17,6 +20,12 @@ const parseBody = (event) => {
   try { return event.body ? JSON.parse(event.body) : {}; }
   catch { return null; }
 };
+const bookmarkView = ({ questionId, subject, category, createdAt }) => ({
+  questionId, subject, category, createdAt,
+});
+const sessionView = ({ sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt }) => ({
+  sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt,
+});
 
 exports.handler = async (event) => {
   const sub = event.requestContext?.authorizer?.jwt?.claims?.sub;
@@ -25,6 +34,7 @@ exports.handler = async (event) => {
   const pk = "USER#" + sub;
   const route = event.routeKey;
   const questionId = event.pathParameters?.questionId;
+  console.info("request_received", { route });
 
   try {
     if (route === "GET /bookmarks") {
@@ -35,7 +45,7 @@ exports.handler = async (event) => {
         ScanIndexForward: false,
         Limit: 100,
       }));
-      return reply(200, { items: result.Items ?? [] });
+      return reply(200, { items: (result.Items ?? []).map(bookmarkView) });
     }
 
     if (route === "PUT /bookmarks/{questionId}") {
@@ -51,7 +61,8 @@ exports.handler = async (event) => {
         createdAt: new Date().toISOString(),
       };
       await db.send(new PutCommand({ TableName: tableName, Item: item }));
-      return reply(200, { item });
+      console.info("bookmark_saved", { questionId });
+      return reply(200, { item: bookmarkView(item) });
     }
 
     if (route === "DELETE /bookmarks/{questionId}") {
@@ -69,7 +80,7 @@ exports.handler = async (event) => {
         ScanIndexForward: false,
         Limit: 100,
       }));
-      return reply(200, { items: (result.Items ?? []).slice(0, 50) });
+      return reply(200, { items: (result.Items ?? []).slice(0, 50).map(sessionView) });
     }
 
     if (route === "POST /sessions") {
@@ -77,6 +88,10 @@ exports.handler = async (event) => {
       if (!body || !["A", "B"].includes(body.subject) || !["QUIZ", "MOCK"].includes(body.mode)) {
         return reply(400, { message: "学習結果が正しくありません。" });
       }
+      const answeredCount = Math.min(100, Math.max(0, Math.trunc(Number(body.answeredCount) || 0)));
+      const correctCount = Math.min(answeredCount, Math.max(0, Math.trunc(Number(body.correctCount) || 0)));
+      if (answeredCount === 0) return reply(400, { message: "解答数は1問以上にしてください。" });
+
       const now = new Date();
       const id = randomUUID();
       const item = {
@@ -86,15 +101,28 @@ exports.handler = async (event) => {
         sessionId: id,
         subject: body.subject,
         mode: body.mode,
-        answeredCount: Math.max(0, Number(body.answeredCount) || 0),
-        correctCount: Math.max(0, Number(body.correctCount) || 0),
-        scoreRate: Math.max(0, Math.min(100, Number(body.scoreRate) || 0)),
-        durationSeconds: Math.max(0, Number(body.durationSeconds) || 0),
+        answeredCount,
+        correctCount,
+        scoreRate: Math.round((correctCount / answeredCount) * 1000) / 10,
+        durationSeconds: Math.min(24 * 60 * 60, Math.max(0, Math.trunc(Number(body.durationSeconds) || 0))),
         createdAt: now.toISOString(),
         expiresAt: Math.floor(now.getTime() / 1000) + 30 * 24 * 60 * 60,
       };
       await db.send(new PutCommand({ TableName: tableName, Item: item }));
-      return reply(201, { item });
+
+      const sessions = await db.send(new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :prefix)",
+        ExpressionAttributeValues: { ":pk": pk, ":prefix": "SESSION#" },
+        ProjectionExpression: "PK, SK",
+        ScanIndexForward: false,
+        Limit: 100,
+      }));
+      for (const oldItem of (sessions.Items ?? []).slice(50)) {
+        await db.send(new DeleteCommand({ TableName: tableName, Key: { PK: oldItem.PK, SK: oldItem.SK } }));
+      }
+
+      return reply(201, { item: sessionView(item) });
     }
 
     return reply(404, { message: "APIが見つかりません。" });
