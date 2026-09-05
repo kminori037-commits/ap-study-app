@@ -9,8 +9,12 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import { Construct } from "constructs";
 import { apiHandlerCode } from "./api-handler";
 
+export interface InfraStackProps extends cdk.StackProps {
+  readonly allowedOrigins?: string[];
+}
+
 export class InfraStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: InfraStackProps) {
     super(scope, id, props);
 
     const userPool = new cognito.UserPool(this, "UserPool", {
@@ -110,7 +114,7 @@ export class InfraStack extends cdk.Stack {
     const httpApi = new apigateway.HttpApi(this, "HttpApi", {
       apiName: "ap-study-api",
       corsPreflight: {
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: props?.allowedOrigins ?? ["http://localhost:3000"],
         allowHeaders: ["authorization", "content-type"],
         allowMethods: [
           apigateway.CorsHttpMethod.GET,

@@ -1,14 +1,19 @@
-# Welcome to your CDK TypeScript project
+# AWS infrastructure
 
-This is a blank project for CDK development with TypeScript.
+AWS CDKで次の2スタックを管理します。
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+- `ApStudyAuthStack`: Cognito、HTTP API、Lambda、DynamoDB
+- `ApStudyHostingStack`: Amplify Hosting、GitHub OIDC、デプロイ専用IAMロール
 
-## Useful commands
+GitHub ActionsのIAMロールは `kminori037-commits/ap-study-app` の `main` ブランチだけを信頼し、指定したAmplifyアプリへのデプロイ操作だけを許可します。
 
-* `npm run build`   type-check the project
-* `npm run watch`   watch for changes and type-check
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+## 検証
+
+```text
+npm ci
+npm test -- --runInBand
+npm run build
+npm run cdk -- synth --quiet
+```
+
+AWSリソースを変更する場合は、料金と差分を確認して承認を得てからデプロイします。

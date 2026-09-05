@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { isSubjectKey, subjects } from "@/lib/subjects";
 import { MockSetup } from "./mock-setup";
 
+export function generateStaticParams() {
+  return [{ subject: "a" }, { subject: "b" }];
+}
+
 export default async function MockSetupPage({ params }: PageProps<"/study/[subject]/mock">) {
   const { subject: subjectParam } = await params;
   if (!isSubjectKey(subjectParam)) notFound();

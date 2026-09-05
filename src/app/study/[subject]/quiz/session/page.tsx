@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { isSubjectKey } from "@/lib/subjects";
-import { SampleQuestion } from "./sample-question";
+import { QuizSession } from "./quiz-session";
 
-export default async function QuizSessionPage({ params, searchParams }: PageProps<"/study/[subject]/quiz/session">) {
+export function generateStaticParams() {
+  return [{ subject: "a" }, { subject: "b" }];
+}
+
+export default async function QuizSessionPage({ params }: PageProps<"/study/[subject]/quiz/session">) {
   const { subject } = await params;
-  const query = await searchParams;
   if (!isSubjectKey(subject)) notFound();
-  const category = typeof query.category === "string" ? query.category : "全分野";
-  const filter = typeof query.filter === "string" ? query.filter : "all";
-  return <SampleQuestion subject={subject} category={category} filter={filter} />;
+  return <QuizSession subject={subject} />;
 }

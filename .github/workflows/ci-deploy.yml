@@ -1,0 +1,100 @@
+name: CI and deploy
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Lint frontend
+        run: npm run lint
+      - name: Validate question data
+        run: npm run validate:questions
+      - name: Build static frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${{ vars.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID: ${{ vars.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+      - name: Install infrastructure dependencies
+        working-directory: infra
+        run: npm ci
+      - name: Test infrastructure
+        working-directory: infra
+        run: npm test -- --runInBand
+      - name: Type-check infrastructure
+        working-directory: infra
+        run: npm run build
+      - name: Synthesize CloudFormation
+        working-directory: infra
+        run: npm run cdk -- synth --quiet
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build production site
+        run: npm run build
+        env:
+          NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${{ vars.NEXT_PUBLIC_COGNITO_USER_POOL_ID }}
+          NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID: ${{ vars.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+      - name: Package static site
+        run: cd out && zip -qr ../site.zip .
+      - name: Configure short-lived AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      - name: Upload and deploy to Amplify Hosting
+        id: deploy
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+        run: |
+          read -r JOB_ID UPLOAD_URL <<< "$(aws amplify create-deployment --app-id "$AMPLIFY_APP_ID" --branch-name main --query '[jobId,zipUploadUrl]' --output text)"
+          curl --fail --silent --show-error --request PUT --upload-file site.zip "$UPLOAD_URL"
+          aws amplify start-deployment --app-id "$AMPLIFY_APP_ID" --branch-name main --job-id "$JOB_ID" >/dev/null
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+      - name: Wait for deployment
+        env:
+          AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+          JOB_ID: ${{ steps.deploy.outputs.job_id }}
+        run: |
+          for attempt in {1..60}; do
+            STATUS=$(aws amplify get-job --app-id "$AMPLIFY_APP_ID" --branch-name main --job-id "$JOB_ID" --query 'job.summary.status' --output text)
+            echo "Amplify deployment status: $STATUS"
+            if [ "$STATUS" = "SUCCEED" ]; then exit 0; fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then exit 1; fi
+            sleep 10
+          done
+          echo "Timed out waiting for Amplify deployment"
+          exit 1

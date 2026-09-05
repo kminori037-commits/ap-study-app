@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isSubjectKey, subjects } from "@/lib/subjects";
 
+export function generateStaticParams() {
+  return [{ subject: "a" }, { subject: "b" }];
+}
+
 export default async function ModeSelectionPage({ params }: PageProps<"/study/[subject]">) {
   const { subject: subjectParam } = await params;
   if (!isSubjectKey(subjectParam)) notFound();
