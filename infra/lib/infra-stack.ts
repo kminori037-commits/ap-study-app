@@ -89,7 +89,7 @@ export class InfraStack extends cdk.Stack {
       handler: "index.handler",
       code: lambda.Code.fromInline(apiHandlerCode),
       memorySize: 128,
-      timeout: cdk.Duration.seconds(10),
+      timeout: cdk.Duration.seconds(30),
       environment: {
         USER_LEARNING_TABLE: userLearning.tableName,
         QUESTION_BANK_TABLE: questionBank.tableName,
@@ -140,6 +140,9 @@ export class InfraStack extends cdk.Stack {
     addRoute("/account-data", [apigateway.HttpMethod.DELETE]);
     addRoute("/questions", [apigateway.HttpMethod.GET]);
     addRoute("/questions/{questionId}/grade", [apigateway.HttpMethod.POST]);
+    addRoute("/mock/{subject}/active", [apigateway.HttpMethod.GET, apigateway.HttpMethod.PUT, apigateway.HttpMethod.DELETE]);
+    addRoute("/mock/{subject}/start", [apigateway.HttpMethod.POST]);
+    addRoute("/mock/{subject}/submit", [apigateway.HttpMethod.POST]);
 
     new cdk.CfnOutput(this, "UserPoolId", {
       value: userPool.userPoolId,

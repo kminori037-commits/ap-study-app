@@ -36,7 +36,7 @@ test("creates an invite-only Lite user pool", () => {
     FunctionName: "ap-study-api",
     MemorySize: 128,
     Runtime: "nodejs22.x",
-    Timeout: 10,
+    Timeout: 30,
   });
 
   template.hasResourceProperties("AWS::ApiGatewayV2::Authorizer", {
@@ -51,5 +51,14 @@ test("creates an invite-only Lite user pool", () => {
     },
   });
 
-  template.resourceCountIs("AWS::ApiGatewayV2::Route", 9);
+  template.resourceCountIs("AWS::ApiGatewayV2::Route", 14);
+  for (const routeKey of [
+    "GET /mock/{subject}/active",
+    "PUT /mock/{subject}/active",
+    "DELETE /mock/{subject}/active",
+    "POST /mock/{subject}/start",
+    "POST /mock/{subject}/submit",
+  ]) {
+    template.hasResourceProperties("AWS::ApiGatewayV2::Route", { RouteKey: routeKey });
+  }
 });

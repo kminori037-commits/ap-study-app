@@ -39,6 +39,28 @@ export type GradeResult = {
   source: { label: string; url?: string };
 };
 
+export type MockActive = {
+  subject: "A" | "B";
+  questions: Question[];
+  answers: Record<string, number | string>;
+  remainingSeconds: number;
+  startedAt: string;
+  updatedAt: string;
+  selectedCategories: string[];
+  configuredQuestionCount: number;
+};
+
+export type MockQuestionResult = GradeResult & {
+  questionId: string;
+  userAnswer: number | string | null;
+  question: Question | null;
+};
+
+export type MockSubmission = {
+  session: StudySession;
+  results: MockQuestionResult[];
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!apiUrl) throw new Error("API URLが設定されていません。");
   const session = await fetchAuthSession();
@@ -71,6 +93,27 @@ export const learningApi = {
       method: "POST",
       body: JSON.stringify({ subject, answer }),
     });
+  },
+  async getActiveMock(subject: "A" | "B") {
+    return (await request<{ active: MockActive | null }>(`/mock/${subject}/active`)).active;
+  },
+  async startMock(subject: "A" | "B", selectedCategories: string[]) {
+    return (await request<{ active: MockActive }>(`/mock/${subject}/start`, {
+      method: "POST",
+      body: JSON.stringify({ selectedCategories }),
+    })).active;
+  },
+  async saveActiveMock(subject: "A" | "B", answers: Record<string, number | string>, remainingSeconds: number) {
+    return request<{ saved: boolean; updatedAt: string }>(`/mock/${subject}/active`, {
+      method: "PUT",
+      body: JSON.stringify({ answers, remainingSeconds }),
+    });
+  },
+  async discardActiveMock(subject: "A" | "B") {
+    await request<void>(`/mock/${subject}/active`, { method: "DELETE" });
+  },
+  async submitMock(subject: "A" | "B") {
+    return request<MockSubmission>(`/mock/${subject}/submit`, { method: "POST" });
   },
   async getBookmarks() {
     return (await request<{ items: Bookmark[] }>("/bookmarks")).items;
