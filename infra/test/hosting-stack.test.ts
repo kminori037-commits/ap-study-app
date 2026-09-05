@@ -28,7 +28,7 @@ test("creates static Amplify hosting with a main-only GitHub OIDC role", () => {
           Condition: {
             StringEquals: {
               "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-              "token.actions.githubusercontent.com:sub": "repo:kminori037-commits/ap-study-app:ref:refs/heads/main",
+              "token.actions.githubusercontent.com:sub": "repo:kminori037-commits@261311293/ap-study-app@1358167591:ref:refs/heads/main",
             },
           },
         }),

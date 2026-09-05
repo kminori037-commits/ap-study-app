@@ -3,7 +3,7 @@ import * as amplify from "aws-cdk-lib/aws-amplify";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 
-const githubRepository = "kminori037-commits/ap-study-app";
+const githubRepositorySubject = "repo:kminori037-commits@261311293/ap-study-app@1358167591:ref:refs/heads/main";
 const productionBranch = "main";
 
 export class HostingStack extends cdk.Stack {
@@ -48,7 +48,7 @@ export class HostingStack extends cdk.Stack {
         {
           StringEquals: {
             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-            "token.actions.githubusercontent.com:sub": `repo:${githubRepository}:ref:refs/heads/${productionBranch}`,
+            "token.actions.githubusercontent.com:sub": githubRepositorySubject,
           },
         },
         "sts:AssumeRoleWithWebIdentity",
