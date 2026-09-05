@@ -134,7 +134,9 @@ export class InfraStack extends cdk.Stack {
     addRoute("/bookmarks", [apigateway.HttpMethod.GET]);
     addRoute("/bookmarks/{questionId}", [apigateway.HttpMethod.PUT, apigateway.HttpMethod.DELETE]);
     addRoute("/history", [apigateway.HttpMethod.GET]);
+    addRoute("/history", [apigateway.HttpMethod.DELETE]);
     addRoute("/sessions", [apigateway.HttpMethod.POST]);
+    addRoute("/account-data", [apigateway.HttpMethod.DELETE]);
 
     new cdk.CfnOutput(this, "UserPoolId", {
       value: userPool.userPoolId,

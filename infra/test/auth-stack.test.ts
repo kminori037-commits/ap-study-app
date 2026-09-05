@@ -50,4 +50,6 @@ test("creates an invite-only Lite user pool", () => {
       ThrottlingRateLimit: 2,
     },
   });
+
+  template.resourceCountIs("AWS::ApiGatewayV2::Route", 7);
 });

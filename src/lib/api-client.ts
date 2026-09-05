@@ -58,6 +58,12 @@ export const learningApi = {
   async getHistory() {
     return (await request<{ items: StudySession[] }>("/history")).items;
   },
+  async resetHistory() {
+    return request<{ deletedCount: number }>("/history", { method: "DELETE" });
+  },
+  async deleteAccountData() {
+    return request<{ deletedCount: number }>("/account-data", { method: "DELETE" });
+  },
   async saveSession(input: Omit<StudySession, "sessionId" | "scoreRate" | "createdAt">) {
     return (await request<{ item: StudySession }>("/sessions", {
       method: "POST",

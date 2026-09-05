@@ -1,6 +1,6 @@
 export const apiHandlerCode = String.raw`
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand, DeleteCommand, QueryCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, DeleteCommand, QueryCommand, BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
 const { randomUUID } = require("node:crypto");
 
 const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -26,6 +26,36 @@ const bookmarkView = ({ questionId, subject, category, createdAt }) => ({
 const sessionView = ({ sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt }) => ({
   sessionId, subject, mode, answeredCount, correctCount, scoreRate, durationSeconds, createdAt,
 });
+const deleteUserItems = async (pk, prefix) => {
+  let lastKey;
+  let deletedCount = 0;
+  do {
+    const names = prefix ? { "#pk": "PK", "#sk": "SK" } : { "#pk": "PK" };
+    const values = prefix ? { ":pk": pk, ":prefix": prefix } : { ":pk": pk };
+    const result = await db.send(new QueryCommand({
+      TableName: tableName,
+      KeyConditionExpression: prefix ? "#pk = :pk AND begins_with(#sk, :prefix)" : "#pk = :pk",
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+      ProjectionExpression: "PK, SK",
+      ExclusiveStartKey: lastKey,
+    }));
+    const items = result.Items ?? [];
+    for (let index = 0; index < items.length; index += 25) {
+      const batch = items.slice(index, index + 25);
+      let requests = batch.map((item) => ({ DeleteRequest: { Key: { PK: item.PK, SK: item.SK } } }));
+      do {
+        const response = await db.send(new BatchWriteCommand({
+          RequestItems: { [tableName]: requests },
+        }));
+        requests = response.UnprocessedItems?.[tableName] ?? [];
+      } while (requests.length > 0);
+      deletedCount += batch.length;
+    }
+    lastKey = result.LastEvaluatedKey;
+  } while (lastKey);
+  return deletedCount;
+};
 
 exports.handler = async (event) => {
   const sub = event.requestContext?.authorizer?.jwt?.claims?.sub;
@@ -81,6 +111,16 @@ exports.handler = async (event) => {
         Limit: 100,
       }));
       return reply(200, { items: (result.Items ?? []).slice(0, 50).map(sessionView) });
+    }
+
+    if (route === "DELETE /history") {
+      const deletedCount = await deleteUserItems(pk, "SESSION#");
+      return reply(200, { deletedCount });
+    }
+
+    if (route === "DELETE /account-data") {
+      const deletedCount = await deleteUserItems(pk);
+      return reply(200, { deletedCount });
     }
 
     if (route === "POST /sessions") {
