@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { useAuth } from "./auth-provider";
 
 const navigation = [
   { href: "/", label: "ホーム" },
@@ -12,6 +14,15 @@ const navigation = [
 
 export function AppHeader() {
   const pathname = usePathname();
+  const { signOutCurrentUser } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  if (pathname.startsWith("/login")) return null;
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    await signOutCurrentUser();
+  };
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -30,7 +41,9 @@ export function AppHeader() {
             );
           })}
         </nav>
-        <button type="button" className="ml-auto grid size-11 place-items-center rounded-full border border-slate-200 bg-slate-50 text-sm font-medium sm:ml-0" aria-label="アカウントメニュー">み</button>
+        <button type="button" disabled={signingOut} onClick={handleSignOut} className="ml-auto min-h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 disabled:text-slate-400 sm:ml-0">
+          {signingOut ? "ログアウト中…" : "ログアウト"}
+        </button>
       </div>
     </header>
   );
