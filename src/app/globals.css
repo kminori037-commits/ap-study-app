@@ -11,3 +11,14 @@ body {
   color: var(--foreground);
   font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
 }
+
+button,
+a,
+input {
+  accent-color: #2563eb;
+}
+
+:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
