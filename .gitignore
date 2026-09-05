@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Test and build output
+coverage/
+dist/
+
+# Local tooling
+.DS_Store
+Thumbs.db
+*.log
+
+# Codex working directories
+work/
+outputs/
