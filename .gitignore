@@ -13,6 +13,7 @@ out/
 # Test and build output
 coverage/
 dist/
+cdk.out/
 
 # Local tooling
 .DS_Store
