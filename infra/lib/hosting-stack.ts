@@ -63,7 +63,12 @@ export class HostingStack extends cdk.Stack {
     });
     deployRole.addToPolicy(new iam.PolicyStatement({
       actions: ["amplify:CreateDeployment", "amplify:StartDeployment", "amplify:GetJob"],
-      resources: [appArn, `${appArn}/branches/${productionBranch}`, `${appArn}/branches/${productionBranch}/jobs/*`],
+      resources: [
+        appArn,
+        `${appArn}/branches/${productionBranch}`,
+        `${appArn}/branches/${productionBranch}/deployments/*`,
+        `${appArn}/branches/${productionBranch}/jobs/*`,
+      ],
     }));
 
     this.siteUrl = `https://${productionBranch}.${app.attrDefaultDomain}`;
