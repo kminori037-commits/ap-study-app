@@ -28,7 +28,7 @@ export type Question = {
   prompt: string;
   choices?: string[];
   answerKind: "CHOICE" | "SHORT";
-  source: { label: string; url?: string };
+  source?: { label: string; url?: string };
 };
 
 export type GradeResult = {
@@ -36,7 +36,7 @@ export type GradeResult = {
   correctIndex?: number;
   modelAnswer: string;
   explanation: string;
-  source: { label: string; url?: string };
+  source?: { label: string; url?: string };
 };
 
 export type MockActive = {

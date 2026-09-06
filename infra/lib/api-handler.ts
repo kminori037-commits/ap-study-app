@@ -224,6 +224,7 @@ exports.handler = async (event) => {
           [questions[index], questions[other]] = [questions[other], questions[index]];
         }
         questions = questions.slice(0, 80);
+        if (questions.length !== 80) return reply(409, { message: "科目A模擬テストには80問必要です。問題データを確認してください。" });
       } else {
         selectedCategories = Array.isArray(body.selectedCategories) ? [...new Set(body.selectedCategories)] : [];
         if (selectedCategories.length !== 4 || selectedCategories.some((field) => !optionalBFields.includes(field))) {

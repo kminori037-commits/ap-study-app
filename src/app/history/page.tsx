@@ -54,7 +54,7 @@ export default function HistoryPage() {
                 <p className="font-semibold text-slate-950">科目{item.subject} ・ {item.mode === "MOCK" ? "模擬テスト" : "一問一答"}</p>
                 <time className="text-sm text-slate-500" dateTime={item.createdAt}>{dateFormatter.format(new Date(item.createdAt))}</time>
               </div>
-              <p className="mt-3 text-slate-700">正答率 <strong className="text-xl text-slate-950">{item.scoreRate}%</strong>（{item.correctCount} / {item.answeredCount}問）</p>
+              <p className="mt-3 text-slate-700">今回の正答率 <strong className="text-xl text-slate-950">{item.scoreRate}%</strong>（{item.correctCount} / {item.answeredCount}問）</p>
             </li>
           ))}
         </ul>

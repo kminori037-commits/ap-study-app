@@ -68,7 +68,7 @@ export function MockSetup({ subject }: { subject: SubjectKey }) {
         <div><dt className="text-sm text-slate-500">本番の問題数</dt><dd className="mt-1 text-xl font-semibold">{subject === "a" ? "80問" : "5問"}</dd></div>
         <div><dt className="text-sm text-slate-500">試験時間</dt><dd className="mt-1 text-xl font-semibold">150分</dd></div>
       </dl>
-      <p className="mt-4 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-900">現在は独自の機能検証用問題を使用します。科目Aは登録問題が80問に満たない間、登録済み問題数で出題します。タイマー、途中保存、再開、提出、採点は本番仕様です。</p>
+      <p className="mt-4 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-900">本アプリ独自問題を使用します。科目Aは80問、科目Bは必須1分野と選択4分野の計5問を出題します。</p>
       {subject === "b" && (
         <fieldset className="mt-7">
           <legend className="font-semibold text-slate-950">回答する分野</legend>

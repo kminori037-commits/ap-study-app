@@ -177,7 +177,7 @@ export function SampleQuestion({ subject, category, filter }: { subject: Subject
             <h2 className="font-semibold text-slate-950">{grade.correct ? "○ 正解です" : "× 不正解です"}</h2>
             <p className="mt-2 font-medium text-slate-800">正解: {grade.modelAnswer}</p>
             <p className="mt-3 leading-7 text-slate-700">{grade.explanation}</p>
-            <p className="mt-3 text-sm text-slate-600">出典: {grade.source.label}</p>
+            {grade.source && <p className="mt-3 text-sm text-slate-600">出典: {grade.source.label}</p>}
           </div>
         )}
         <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">

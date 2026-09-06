@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const input = path.resolve(process.argv[2] ?? "data/questions/original-mvp.json");
-const output = path.resolve(process.argv[3] ?? "work/question-bank-seed.json");
+const outputDirectory = path.resolve(process.argv[3] ?? "work/question-bank-seed");
 const bank = JSON.parse(await readFile(input, "utf8"));
 
 const attribute = (value) => {
@@ -28,7 +28,7 @@ for (const question of bank.questions) {
     prompt: question.prompt,
     ...(question.choices ? { choices: question.choices } : {}),
     answerKind: question.answer.kind,
-    source: question.source
+    ...(question.source ? { source: question.source } : {})
   };
   const answer = {
     PK: pk,
@@ -42,7 +42,11 @@ for (const question of bank.questions) {
   }
 }
 
-if (requests.length > 25) throw new Error("A single seed batch cannot contain more than 25 items.");
-await mkdir(path.dirname(output), { recursive: true });
-await writeFile(output, JSON.stringify({ "ap-study-question-bank": requests }, null, 2) + "\n", "utf8");
-console.log(`Built ${requests.length} DynamoDB items at ${output}`);
+await mkdir(outputDirectory, { recursive: true });
+const batchCount = Math.ceil(requests.length / 25);
+for (let index = 0; index < batchCount; index += 1) {
+  const batch = requests.slice(index * 25, (index + 1) * 25);
+  const output = path.join(outputDirectory, `batch-${String(index + 1).padStart(3, "0")}.json`);
+  await writeFile(output, JSON.stringify({ "ap-study-question-bank": batch }, null, 2) + "\n", "utf8");
+}
+console.log(`Built ${requests.length} DynamoDB items in ${batchCount} batches at ${outputDirectory}`);
