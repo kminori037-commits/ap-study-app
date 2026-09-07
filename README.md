@@ -20,6 +20,8 @@ https://main.d3a1gneo3ntdlx.amplifyapp.com/
 
 現在の問題バンクには、春期・秋期を含む約5年分相当として本アプリ独自問題を科目A 800問、科目B 108問収録しています。独自問題には出典を表示せず、外部の問題を追加する場合だけ出典を表示します。一問一答は800問又は108問から重複なしで最大100問、科目A模擬試験は800問から毎回80問をランダム出題します。
 
+問題データは `npm run validate:questions` で検証し、`npm run build:question-seed` でDynamoDB投入用バッチを生成します。AWSへ投入する場合は `npm run import:question-seed -- --profile=ap-study-dev`、投入後の実数確認は `npm run verify:question-bank -- --profile=ap-study-dev` を使用します。投入処理は低い書込性能でも完了するよう、AWSの速度制限時に自動再試行します。
+
 ## ローカル起動
 
 1. `.env.example` を `.env.local` としてコピーし、開発環境の値を設定します。
